@@ -3,10 +3,12 @@
 import express 	  from 'express';
 import bodyParser from 'body-parser';
 import request 	  from 'request';
+import apiai 	  from 'apiai';
 
 const app = express()
+const asd = apiai("3793e4868a974eb5aa8e810282c302fd");
 
-app.set('port', (process.env.PORT || 5000))
+app.set('port', (5000))
 
 // Process application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended: false}))
@@ -16,13 +18,12 @@ app.use(bodyParser.json())
 
 // Index route
 app.get('/', function (req, res) {
-    res.send('Hello world, I am a chat bot' + app.get('port'))
+    res.send('Hello world, I am a chat bot')
 })
 
 // for Facebook verification
 app.get('/webhook/', function (req, res) {
     if (req.query['hub.verify_token'] === 'my_voice_is_my_password_verify_me') {
-    	// console.log("yesssssssss");
         res.send(req.query['hub.challenge'])
     }
 
@@ -39,10 +40,20 @@ app.post('/webhook/', function (req, res) {
     for (let i = 0; i < messaging_events.length; i++) {
         let event = req.body.entry[0].messaging[i]
         let sender = event.sender.id
-        if (event.message && event.message.text) {
-            let text = event.message.text
-            sendTextMessage(sender, "Hieee. :)")
-        }
+        	if (event.message && event.message.text) {
+        	    let text = event.message.text
+        	    var request = asd.textRequest(text, {
+        	    	sessionId: event.sender.id
+        	    });
+        	    request.on('response', function(response) {
+        	    	console.log(response,"***");
+    				sendTextMessage(sender,response.result.fulfillment.speech);
+				});
+				request.on('error', function(error) {
+				    sendTextMessage(sender, "Oops! Something went wrong...");
+				});
+				request.end();
+        	}
     }
     res.sendStatus(200)
 })
