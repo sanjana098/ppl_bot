@@ -93,8 +93,28 @@ function getReply(sender,text) {
             );
         }
         else if(response.result.metadata.intentName == 'round_time') {   // If asked for date of a particular round
-            sendTextMessage(sender,"It happens on Feb "+(parseInt(response.result.fulfillment.speech)+18)+", 2017" );
+            var date = new Array();
+            date['1'] = "18";
+            date['2'] = "19";
+            date['3'] = "20";
+            date['4'] = "21";
+            date['5'] = "22";
+            date['6'] = "23";
+            date['7'] = "24";
+            date['8'] = "25";
 
+            var message = "";
+            if(response.result.fulfillment.speech>=1 && response.result.fulfillment.speech<=8){
+                message = "It happens on Feb "+(date[response.result.fulfillment.speech])+", 2017";
+            }
+            else{
+                message = "There is no such round ";
+            }
+            sendTextMessage(sender, message);
+
+        }
+        else if(response.result.metadata.intentName == 'play_ppl') {
+            sendURL(sender);
         }
         else {
             sendTextMessage(sender,response.result.fulfillment.speech);
@@ -107,6 +127,39 @@ function getReply(sender,text) {
 
 }
 
+
+function sendURL(sender) {
+    request({
+        url: 'https://graph.facebook.com/v2.6/me/messages',
+        qs: {access_token:token},
+        method: 'POST',
+        json: {
+            recipient: {id:sender},
+            message: {
+                attachment: {
+                  type: "template",
+                  payload: {
+                    template_type: "button",
+                    text: "Click the link to play",
+                    buttons:[{
+                      type: "web_url",
+                      url: "https://ppl.pragyan.org",
+                      title: "Pragyan premier league",
+                      webview_height_ratio: "full",
+                      messenger_extensions: true
+                    }]
+                  }
+                }
+            }
+        }
+    }, function(error, response, body) {
+        if (error) {
+            console.log('Error sending messages: ', error)
+        } else if (response.body.error) {
+            console.log('Error: ', response.body.error)
+        }
+    })
+}
 function sendTextMessage(sender, text) {
 
     let messageData = { text:text }
