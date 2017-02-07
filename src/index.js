@@ -30,18 +30,34 @@ app.listen(app.get('port'), function() {
 app.post('/webhook', function (req, res) {      // For Facebook messenger
 
     let messaging_events = req.body.entry[0].messaging
-
     for (let i = 0; i < messaging_events.length; i++) {
 
         let event = req.body.entry[0].messaging[i]
         let sender = event.sender.id
 
-        	if (event.message && event.message.text) {
+            if (event.message && event.message.text) {
+                // Typing sign (...)
+                request({
+                    url: 'https://graph.facebook.com/v2.6/me/messages',
+                    qs: {access_token:token},
+                    method: 'POST',
+                    json: {
+                        recipient: {id:sender},
+                        sender_action:"typing_on"
+                    }
+                }, function(error, response, body) {
+                    if (error) {
+                        console.log('Error sending messages: ', error)
+                    } else if (response.body.error) {
+                        console.log('Error: ', response.body.error)
+                    }
+                })
 
-        	    let text = event.message.text
+                let text = event.message.text
                 getReply(sender, text);
 
         	}
+            
     }
     res.sendStatus(200);
 })
@@ -63,7 +79,7 @@ function getReply(sender,text) {
 
     req.on('response', function(response) {
 
-        if(response.result.metadata.intentName == 'round') {                    
+        if(response.result.metadata.intentName == 'round') {        // Current round               
             request.post(
                 'http://localhost:8000/api/bot/getRoundNum',
                 {
@@ -75,6 +91,10 @@ function getReply(sender,text) {
                     sendTextMessage(sender,body.message);
                 }
             );
+        }
+        else if(response.result.metadata.intentName == 'round_time') {   // If asked for date of a particular round
+            sendTextMessage(sender,"It happens on Feb "+(parseInt(response.result.fulfillment.speech)+18)+", 2017" );
+
         }
         else {
             sendTextMessage(sender,response.result.fulfillment.speech);
