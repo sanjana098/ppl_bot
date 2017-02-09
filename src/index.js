@@ -56,6 +56,7 @@ app.post('/webhook', function (req, res) {      // For Facebook messenger
                 let text = event.message.text
                 getReply(sender, text);
 
+
         	}
             
     }
@@ -92,25 +93,88 @@ function getReply(sender,text) {
                 }
             );
         }
-        else if(response.result.metadata.intentName == 'round_time') {   // If asked for date of a particular round
-            var date = new Array();
-            date['1'] = "18";
-            date['2'] = "19";
-            date['3'] = "20";
-            date['4'] = "21";
-            date['5'] = "22";
-            date['6'] = "23";
-            date['7'] = "24";
-            date['8'] = "25";
+        else if(response.result.metadata.intentName == 'round_time') {   // If asked for date of a particular match
+            
+            if(response.result.fulfillment.speech == 'timings') {
 
-            var message = "";
-            if(response.result.fulfillment.speech>=1 && response.result.fulfillment.speech<=8){
-                message = "It happens on Feb "+(date[response.result.fulfillment.speech])+", 2017";
+                request({
+                    url: 'https://graph.facebook.com/v2.6/me/messages',
+                    qs: {access_token:token},
+                    method: 'POST',
+                    json: {
+                        recipient: {id:sender},
+                        message: {
+                            text: "Pick a match number",
+                            quick_replies:[
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 1",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ABOUT"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 2",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 3",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 4",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 5",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 6",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 7",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                },
+                                {
+                                  "content_type":"text",
+                                  "title":"Match 8",
+                                  "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                                }
+                            ]
+                        }
+                    }
+                })
+
             }
-            else{
-                message = "There is no such round ";
+
+            else {
+                var date = new Array();
+                date['1'] = "18";
+                date['2'] = "19";
+                date['3'] = "20";
+                date['4'] = "21";
+                date['5'] = "22";
+                date['6'] = "23";
+                date['7'] = "24";
+                date['8'] = "25";
+
+                var message = "";
+                if(response.result.fulfillment.speech>=1 && response.result.fulfillment.speech<=8){
+                    message = "It happens on Feb "+(date[response.result.fulfillment.speech])+", 2017";
+                }
+                else{
+                    message = "There is no such round ";
+                }
+
+                sendTextMessage(sender, message);
             }
-            sendTextMessage(sender, message);
+            
 
         }
         else if(response.result.metadata.intentName == 'play_ppl') {
@@ -123,10 +187,10 @@ function getReply(sender,text) {
     req.on('error', function(error) {
         sendTextMessage(sender, "Oops! Something went wrong...");
     });
+    
     req.end();
 
 }
-
 
 function sendURL(sender) {
     request({
@@ -144,12 +208,24 @@ function sendURL(sender) {
                     buttons:[{
                       type: "web_url",
                       url: "https://ppl.pragyan.org",
-                      title: "Pragyan premier league",
+                      title: "Pragyan Premier League",
                       webview_height_ratio: "full",
                       messenger_extensions: true
                     }]
                   }
-                }
+                },
+                quick_replies:[
+                    {
+                      "content_type":"text",
+                      "title":"What is PPL ?",
+                      "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ABOUT"
+                    },
+                    {
+                      "content_type":"text",
+                      "title":"Match timings",
+                      "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                    }
+                ]
             }
         }
     }, function(error, response, body) {
@@ -162,15 +238,27 @@ function sendURL(sender) {
 }
 function sendTextMessage(sender, text) {
 
-    let messageData = { text:text }
-
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
         qs: {access_token:token},
         method: 'POST',
         json: {
             recipient: {id:sender},
-            message: messageData,
+            message: {
+                text: text,
+                quick_replies:[
+                    {
+                      "content_type":"text",
+                      "title":"What is PPL ?",
+                      "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ABOUT"
+                    },
+                    {
+                      "content_type":"text",
+                      "title":"Match timings",
+                      "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_ASKING_ROUND_DETAILS"
+                    }
+                ]
+            }
         }
     }, function(error, response, body) {
         if (error) {
